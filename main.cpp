@@ -116,47 +116,10 @@ Mat transform(Mat image, double tx, double ty, double a11, double a12, double a2
 }
 
 
-/*
 double optimize_ty(Mat ref, Mat flt, double ty, double rng, const double tx, const double a11, const double a12, const double a21, const double a22)
 {
     double sta = ty - 0.382*rng;
     double end = ty + 0.618*rng;
-    double f3pos = ty;
-
-    std::cout << "sta: " << sta << "\n";
-    std::cout << "end: " << end << "\n";
-    std::cout << "ty: " << ty << "\n";
-
-    while (true) {
-        double f1 = mutual_information(ref, transform(flt, tx, sta, a11, a12, a21, a22));
-        double f3 = mutual_information(ref, transform(flt, tx, end, a11, a12, a21, a22));
-        double f2 = mutual_information(ref, transform(flt, tx, ty, a11, a12, a21, a22));
-
-        double f4pos = ty + 0.312*(end-ty);
-        std::cout << "f4pos " << f4pos << "\n";
-        double f4val = mutual_information(ref, transform(flt, tx, f4pos, a11, a12, a21, a22));
-        //std::cout << f4pos << "''" << f4val << "##" << f2 <<"\n";
-        double dist = f4pos -ty;
-        if (f4val > f2) {
-            sta = ty;
-            ty = f4pos;
-        } else {
-            end = f4pos;
-        }
-
-        //std::cout << dist << "  " << f4pos << ":"  << exp(-f4val) << "ä\n" << std::flush;
-
-        if (dist < 0.5) break;
-    }
-
-    return ty;
-}*/
-
-double optimize_ty(Mat ref, Mat flt, double ty, double rng, const double tx, const double a11, const double a12, const double a21, const double a22)
-{
-    double sta = ty - 0.382*rng;
-    double end = ty + 0.618*rng;
-    double f3pos = ty;
 
     double c = (end - (end-sta)/1.618);
     double d = (sta + (end-sta)/1.618);
@@ -180,7 +143,6 @@ double optimize_tx(Mat ref, Mat flt, double tx, double rng, const double ty, con
 {
     double sta = tx - 0.382*rng;
     double end = tx + 0.618*rng;
-    double f3pos = tx;
 
     double c = (end - (end-sta)/1.618);
     double d = (sta + (end-sta)/1.618);
@@ -204,7 +166,6 @@ double optimize_a11(Mat ref, Mat flt, double a11, double rng, const double tx, c
 {
    double sta = a11 - 0.382*rng;
    double end = a11 + 0.618*rng;
-   double f3pos = a11;
 
    double c = (end - (end-sta)/1.618);
    double d = (sta + (end-sta)/1.618);
@@ -228,7 +189,6 @@ double optimize_a12(Mat ref, Mat flt, double a12, double rng, const double tx, c
 {
    double sta = a12 - 0.382*rng;
    double end = a12 + 0.618*rng;
-   double f3pos = a12;
 
    double c = (end - (end-sta)/1.618);
    double d = (sta + (end-sta)/1.618);
@@ -248,11 +208,60 @@ double optimize_a12(Mat ref, Mat flt, double a12, double rng, const double tx, c
    return (end+sta)/2;
 }
 
+double optimize_a22(Mat ref, Mat flt, double a22, double rng, const double tx, const double ty, const double a11, const double a12, const double a21)
+{
+   double sta = a22 - 0.382*rng;
+   double end = a22 + 0.618*rng;
+
+   double c = (end - (end-sta)/1.618);
+   double d = (sta + (end-sta)/1.618);
+
+   while (abs(c-d) > 0.005) {
+      if (exp(-mutual_information(ref, transform(flt, tx, ty, a11, a12, a21, c)))
+          < exp(-mutual_information(ref, transform(flt, tx, ty, a11, a12, a21, d)))) {
+         end = d;
+      } else {
+         sta = c;
+      }
+
+      c = (end - (end-sta)/1.618);
+      d = (sta + (end-sta)/1.618);
+   }
+
+   return (end+sta)/2;
+}
+
+double optimize_a21(Mat ref, Mat flt, double a21, double rng, const double tx, const double ty, const double a11, const double a12, const double a22)
+{
+   double sta = a21 - 0.382*rng;
+   double end = a21 + 0.618*rng;
+   double f3pos = a21;
+
+   double c = (end - (end-sta)/1.618);
+   double d = (sta + (end-sta)/1.618);
+
+   while (abs(c-d) > 0.005) {
+      if (exp(-mutual_information(ref, transform(flt, tx, ty, a11, a12, c, a22)))
+          < exp(-mutual_information(ref, transform(flt, tx, ty, a11, a12, d, a22)))) {
+         end = d;
+      } else {
+         sta = c;
+      }
+
+      c = (end - (end-sta)/1.618);
+      d = (sta + (end-sta)/1.618);
+   }
+
+   return (end+sta)/2;
+}
+
 
 int main()
 {
-  Mat image = imread("ctchest.png", CV_LOAD_IMAGE_GRAYSCALE);
-  Mat pet = imread("petchest.jpg", CV_LOAD_IMAGE_GRAYSCALE);
+  Mat image = imread("brain2.png", CV_LOAD_IMAGE_GRAYSCALE);
+  Mat pet = imread("pet.jpg", CV_LOAD_IMAGE_GRAYSCALE);
+
+  pet = transform(pet, 3, -3, 0.96, 0, 0, 1.01);
 
   Size origsize(512, 512);
   resize(image, image, origsize);
@@ -283,12 +292,7 @@ int main()
   double a21 = 0.0;
   double a22 = 1.0;
   std::cout << "???" << tx << " " << ty << "???\n";
-  const double trng = 25;
 
-  double a = ty-25;
-  double b = ty+25*1.61;
-  double xa = tx-25;
-  double xb = ty+25*1.61;
   bool converged = false;
 
   double last_mutualinf = 100.0;
@@ -297,6 +301,8 @@ int main()
   double ty_opt;
   double a11_opt;
   double a12_opt;
+  double a21_opt;
+  double a22_opt;
 
   //ty /= 2;
   while (!converged) {
@@ -320,7 +326,7 @@ int main()
     }
 
 
-    a11_opt = optimize_a11(image, pet, a11, 1.0, tx, ty, a12, a21, a22);
+    a11_opt = optimize_a11(image, pet, a11, 2.0, tx, ty, a12, a21, a22);
     curr_mutualinf = exp(-mutual_information(image, transform(pet, tx, ty, a11_opt, a12, a21, a22)));
     if (last_mutualinf - curr_mutualinf > 0.00005) {
         a11 = a11_opt;
@@ -328,11 +334,29 @@ int main()
         converged = false;
     }
 
-    a12_opt = optimize_a12(image, pet, a12, 1.0, tx, ty, a11, a21, a22);
+    a12_opt = optimize_a12(image, pet, a12, 2.0, tx, ty, a11, a21, a22);
     curr_mutualinf = exp(-mutual_information(image, transform(pet, tx, ty, a11, a12_opt, a21, a22)));
     std::cout << last_mutualinf - curr_mutualinf << "##";
     if (last_mutualinf - curr_mutualinf > 0.00005) {
         a12 = a12_opt;
+        last_mutualinf = curr_mutualinf;
+        converged = false;
+    }
+
+    a21_opt = optimize_a21(image, pet, a21, 2.0, tx, ty, a11, a12, a22);
+    curr_mutualinf = exp(-mutual_information(image, transform(pet, tx, ty, a11, a12, a21_opt, a22)));
+    std::cout << last_mutualinf - curr_mutualinf << "##";
+    if (last_mutualinf - curr_mutualinf > 0.00005) {
+        a21 = a21_opt;
+        last_mutualinf = curr_mutualinf;
+        converged = false;
+    }
+
+    a22_opt = optimize_a22(image, pet, a22, 2.0, tx, ty, a12, a12, a21);
+    curr_mutualinf = exp(-mutual_information(image, transform(pet, tx, ty, a11, a12, a21, a22_opt)));
+    std::cout << last_mutualinf - curr_mutualinf << "##";
+    if (last_mutualinf - curr_mutualinf > 0.00005) {
+        a22 = a22_opt;
         last_mutualinf = curr_mutualinf;
         converged = false;
     }
