@@ -4,9 +4,11 @@
 #include <opencv2/nonfree/features2d.hpp>
 #include <iostream>
 #include <algorithm>
+#include <functional>
 
 using namespace cv;
 using namespace std;
+using namespace std::placeholders;
 
 
 double mutual_information(Mat ref, Mat flt)
@@ -115,64 +117,16 @@ Mat transform(Mat image, double tx, double ty, double a11, double a12, double a2
     return out;
 }
 
-
-double optimize_ty(Mat ref, Mat flt, double ty, double rng, const double tx, const double a11, const double a12, const double a21, const double a22)
+template <typename F>
+double optimize_goldensectionsearch(double init, double rng, F function)
 {
-    double sta = ty - 0.382*rng;
-    double end = ty + 0.618*rng;
-
-    double c = (end - (end-sta)/1.618);
-    double d = (sta + (end-sta)/1.618);
-
-    while (abs(c-d) > 0.5) {
-       if (exp(-mutual_information(ref, transform(flt, tx, c, a11, a12, a21, a22)))
-           < exp(-mutual_information(ref, transform(flt, tx, d, a11, a12, a21, a22)))) {
-          end = d;
-       } else {
-          sta = c;
-       }
-
-       c = (end - (end-sta)/1.618);
-       d = (sta + (end-sta)/1.618);
-    }
-
-    return (end+sta)/2;
-}
-
-double optimize_tx(Mat ref, Mat flt, double tx, double rng, const double ty, const double a11, const double a12, const double a21, const double a22)
-{
-    double sta = tx - 0.382*rng;
-    double end = tx + 0.618*rng;
-
-    double c = (end - (end-sta)/1.618);
-    double d = (sta + (end-sta)/1.618);
-
-    while (abs(c-d) > 0.5) {
-       if (exp(-mutual_information(ref, transform(flt, c, ty, a11, a12, a21, a22)))
-           < exp(-mutual_information(ref, transform(flt, d, ty, a11, a12, a21, a22)))) {
-          end = d;
-       } else {
-          sta = c;
-       }
-
-       c = (end - (end-sta)/1.618);
-       d = (sta + (end-sta)/1.618);
-    }
-
-    return (end+sta)/2;
-}
-
-double optimize_a11(Mat ref, Mat flt, double a11, double rng, const double tx, const double ty, const double a12, const double a21, const double a22)
-{
-   double sta = a11 - 0.382*rng;
-   double end = a11 + 0.618*rng;
-
+   double sta = init - 0.382*rng;
+   double end = init + 0.618*rng;
    double c = (end - (end-sta)/1.618);
    double d = (sta + (end-sta)/1.618);
 
    while (abs(c-d) > 0.005) {
-      if (exp(-mutual_information(ref, transform(flt, tx, ty, c, a12, a21, a22)))
-          < exp(-mutual_information(ref, transform(flt, tx, ty, d, a12, a21, a22)))) {
+      if (function(c) < function(d)) {
          end = d;
       } else {
          sta = c;
@@ -185,74 +139,9 @@ double optimize_a11(Mat ref, Mat flt, double a11, double rng, const double tx, c
    return (end+sta)/2;
 }
 
-double optimize_a12(Mat ref, Mat flt, double a12, double rng, const double tx, const double ty, const double a11, const double a21, const double a22)
+double cost_function(Mat ref, Mat flt, double tx, double ty, double a11, double a12, double a21, double a22)
 {
-   double sta = a12 - 0.382*rng;
-   double end = a12 + 0.618*rng;
-
-   double c = (end - (end-sta)/1.618);
-   double d = (sta + (end-sta)/1.618);
-
-   while (abs(c-d) > 0.005) {
-      if (exp(-mutual_information(ref, transform(flt, tx, ty, a11, c, a21, a22)))
-          < exp(-mutual_information(ref, transform(flt, tx, ty, a11, d, a21, a22)))) {
-         end = d;
-      } else {
-         sta = c;
-      }
-
-      c = (end - (end-sta)/1.618);
-      d = (sta + (end-sta)/1.618);
-   }
-
-   return (end+sta)/2;
-}
-
-double optimize_a22(Mat ref, Mat flt, double a22, double rng, const double tx, const double ty, const double a11, const double a12, const double a21)
-{
-   double sta = a22 - 0.382*rng;
-   double end = a22 + 0.618*rng;
-
-   double c = (end - (end-sta)/1.618);
-   double d = (sta + (end-sta)/1.618);
-
-   while (abs(c-d) > 0.005) {
-      if (exp(-mutual_information(ref, transform(flt, tx, ty, a11, a12, a21, c)))
-          < exp(-mutual_information(ref, transform(flt, tx, ty, a11, a12, a21, d)))) {
-         end = d;
-      } else {
-         sta = c;
-      }
-
-      c = (end - (end-sta)/1.618);
-      d = (sta + (end-sta)/1.618);
-   }
-
-   return (end+sta)/2;
-}
-
-double optimize_a21(Mat ref, Mat flt, double a21, double rng, const double tx, const double ty, const double a11, const double a12, const double a22)
-{
-   double sta = a21 - 0.382*rng;
-   double end = a21 + 0.618*rng;
-   double f3pos = a21;
-
-   double c = (end - (end-sta)/1.618);
-   double d = (sta + (end-sta)/1.618);
-
-   while (abs(c-d) > 0.005) {
-      if (exp(-mutual_information(ref, transform(flt, tx, ty, a11, a12, c, a22)))
-          < exp(-mutual_information(ref, transform(flt, tx, ty, a11, a12, d, a22)))) {
-         end = d;
-      } else {
-         sta = c;
-      }
-
-      c = (end - (end-sta)/1.618);
-      d = (sta + (end-sta)/1.618);
-   }
-
-   return (end+sta)/2;
+   return exp(-mutual_information(ref, transform(flt, tx, ty, a11, a12, a21, a22)));
 }
 
 
@@ -307,7 +196,9 @@ int main()
   //ty /= 2;
   while (!converged) {
     converged  = true;
-    tx_opt = optimize_tx(image, pet, tx, 80, ty, a11, a12, a21, a22);
+    auto optimize_tx = std::bind(cost_function, image, pet, _1, ty, a11, a12, a21, a22);
+    //tx_opt = optimize_tx(image, pet, tx, 80, ty, a11, a12, a21, a22);
+    tx_opt = optimize_goldensectionsearch(tx, 80, optimize_tx);
     curr_mutualinf = exp(-mutual_information(image, transform(pet, tx_opt, ty, a11, a12, a21, a22)));
     if (last_mutualinf - curr_mutualinf > 0.0005) {
         tx = tx_opt;
@@ -317,7 +208,8 @@ int main()
 
     std::cout << last_mutualinf - curr_mutualinf << "++\n";
 
-    ty_opt = optimize_ty(image, pet, ty, 80, tx, a11, a12, a21, a22);
+    auto optimize_ty = std::bind(cost_function, image, pet, tx, _1, a11, a12, a21, a22);
+    ty_opt = optimize_goldensectionsearch(ty, 80, optimize_ty);
     curr_mutualinf = exp(-mutual_information(image, transform(pet, tx, ty_opt, a11, a12, a21, a22)));
     if (last_mutualinf - curr_mutualinf > 0.00005) {
         ty = ty_opt;
@@ -326,7 +218,8 @@ int main()
     }
 
 
-    a11_opt = optimize_a11(image, pet, a11, 2.0, tx, ty, a12, a21, a22);
+    auto optimize_a11 = std::bind(cost_function, image, pet, tx, ty, _1, a12, a21, a22);
+    a11_opt = optimize_goldensectionsearch(a11, 2.0, optimize_a11);
     curr_mutualinf = exp(-mutual_information(image, transform(pet, tx, ty, a11_opt, a12, a21, a22)));
     if (last_mutualinf - curr_mutualinf > 0.00005) {
         a11 = a11_opt;
@@ -334,7 +227,8 @@ int main()
         converged = false;
     }
 
-    a12_opt = optimize_a12(image, pet, a12, 2.0, tx, ty, a11, a21, a22);
+    auto optimize_a12 = std::bind(cost_function, image, pet, tx, ty, a11, _1, a21, a22);
+    a12_opt = optimize_goldensectionsearch(a12, 2.0, optimize_a12);
     curr_mutualinf = exp(-mutual_information(image, transform(pet, tx, ty, a11, a12_opt, a21, a22)));
     std::cout << last_mutualinf - curr_mutualinf << "##";
     if (last_mutualinf - curr_mutualinf > 0.00005) {
@@ -343,7 +237,8 @@ int main()
         converged = false;
     }
 
-    a21_opt = optimize_a21(image, pet, a21, 2.0, tx, ty, a11, a12, a22);
+    auto optimize_a21 = std::bind(cost_function, image, pet, tx, ty, a11, a12, _1, a22);
+    a21_opt = optimize_goldensectionsearch(a21, 2.0, optimize_a21);
     curr_mutualinf = exp(-mutual_information(image, transform(pet, tx, ty, a11, a12, a21_opt, a22)));
     std::cout << last_mutualinf - curr_mutualinf << "##";
     if (last_mutualinf - curr_mutualinf > 0.00005) {
@@ -352,7 +247,8 @@ int main()
         converged = false;
     }
 
-    a22_opt = optimize_a22(image, pet, a22, 2.0, tx, ty, a12, a12, a21);
+    auto optimize_a22 = std::bind(cost_function, image, pet, tx, ty, a11, a12, a21, _1);
+    a22_opt = optimize_goldensectionsearch(a22, 2.0, optimize_a22);
     curr_mutualinf = exp(-mutual_information(image, transform(pet, tx, ty, a11, a12, a21, a22_opt)));
     std::cout << last_mutualinf - curr_mutualinf << "##";
     if (last_mutualinf - curr_mutualinf > 0.00005) {
