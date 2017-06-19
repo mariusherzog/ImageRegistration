@@ -150,11 +150,12 @@ int main()
    Mat image = imread("brain2.png", CV_LOAD_IMAGE_GRAYSCALE);
    Mat pet = imread("brain2.png", CV_LOAD_IMAGE_GRAYSCALE);
 
-   pet = transform(pet, 3, -3, 0.96, 0, 0, 1.01);
+   pet = transform(pet, 9, -13, 0.96, 0, 0, 1.06);
+   imshow("lena_original", pet);
 
    Size origsize(512, 512);
    resize(image, image, origsize);
-   bitwise_not(pet, pet);
+   //bitwise_not(pet, pet);
 
    //Mat trans_mat = (Mat_<double>(2,3) << 1.04*cos(-0.05), sin(-0.05), 5, -sin(-0.05), 1.01*cos(-0.05), 3);
    //warpAffine(pet,pet,trans_mat,pet.size());
@@ -200,7 +201,7 @@ int main()
       //tx_opt = optimize_tx(image, pet, tx, 80, ty, a11, a12, a21, a22);
       tx_opt = optimize_goldensectionsearch(tx, 80, optimize_tx);
       curr_mutualinf = exp(-mutual_information(image, transform(pet, tx_opt, ty, a11, a12, a21, a22)));
-      if (last_mutualinf - curr_mutualinf > 0.0005) {
+      if (last_mutualinf - curr_mutualinf > 0.00005) {
          tx = tx_opt;
          last_mutualinf = curr_mutualinf;
          converged = false;
@@ -219,7 +220,7 @@ int main()
 
 
       auto optimize_a11 = std::bind(cost_function, image, pet, tx, ty, _1, a12, a21, a22);
-      a11_opt = optimize_goldensectionsearch(a11, 2.0, optimize_a11);
+      a11_opt = optimize_goldensectionsearch(a11, 1.0, optimize_a11);
       curr_mutualinf = exp(-mutual_information(image, transform(pet, tx, ty, a11_opt, a12, a21, a22)));
       if (last_mutualinf - curr_mutualinf > 0.00005) {
          a11 = a11_opt;
@@ -228,7 +229,7 @@ int main()
       }
 
       auto optimize_a12 = std::bind(cost_function, image, pet, tx, ty, a11, _1, a21, a22);
-      a12_opt = optimize_goldensectionsearch(a12, 2.0, optimize_a12);
+      a12_opt = optimize_goldensectionsearch(a12, 1.0, optimize_a12);
       curr_mutualinf = exp(-mutual_information(image, transform(pet, tx, ty, a11, a12_opt, a21, a22)));
       std::cout << last_mutualinf - curr_mutualinf << "##";
       if (last_mutualinf - curr_mutualinf > 0.00005) {
@@ -238,7 +239,7 @@ int main()
       }
 
       auto optimize_a21 = std::bind(cost_function, image, pet, tx, ty, a11, a12, _1, a22);
-      a21_opt = optimize_goldensectionsearch(a21, 2.0, optimize_a21);
+      a21_opt = optimize_goldensectionsearch(a21, 1.0, optimize_a21);
       curr_mutualinf = exp(-mutual_information(image, transform(pet, tx, ty, a11, a12, a21_opt, a22)));
       std::cout << last_mutualinf - curr_mutualinf << "##";
       if (last_mutualinf - curr_mutualinf > 0.00005) {
@@ -248,7 +249,7 @@ int main()
       }
 
       auto optimize_a22 = std::bind(cost_function, image, pet, tx, ty, a11, a12, a21, _1);
-      a22_opt = optimize_goldensectionsearch(a22, 2.0, optimize_a22);
+      a22_opt = optimize_goldensectionsearch(a22, 1.8, optimize_a22);
       curr_mutualinf = exp(-mutual_information(image, transform(pet, tx, ty, a11, a12, a21, a22_opt)));
       std::cout << last_mutualinf - curr_mutualinf << "##";
       if (last_mutualinf - curr_mutualinf > 0.00005) {
@@ -260,7 +261,7 @@ int main()
 
 
    std::cout << "!" << tx << " " << ty << "#";
-   Mat fin = transform(pet, tx, ty, a11, a12, 0, 1);
+   Mat fin = transform(pet, tx, ty, a11, a12, a21, a22);
 
    double mutual_inf = mutual_information(image, fin);
    std::cout << exp(-mutual_inf) << "*** \n";
@@ -273,7 +274,6 @@ int main()
    merge(channel, 3, color);
 
    imshow("lena", image);
-   imshow("lena_original", pet);
    imshow("fin", color);
    waitKey(0);
 }
