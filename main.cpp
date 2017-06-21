@@ -147,9 +147,19 @@ double cost_function(Mat ref, Mat flt, double tx, double ty, double a11, double 
 Mat fusion_alphablend(Mat ref, Mat flt, double alpha)
 {
    assert(abs(alpha) < 1.0);
+
+   Mat color(flt.cols, flt.rows, CV_8UC3);
+   cv::cvtColor(flt, color, cv::COLOR_GRAY2BGR);
+   Mat channel[3];
+   split(color, channel);
+   channel[1] = Mat::zeros(flt.rows, flt.cols, CV_8UC1);
+   merge(channel, 3, color);
+
+   cv::cvtColor(ref, ref, cv::COLOR_GRAY2BGR);
+
    double beta = 1-alpha;
    Mat dst = ref.clone();
-   addWeighted(ref, alpha, flt, beta, 0.0, dst);
+   addWeighted(ref, alpha, color, beta, 0.0, dst);
    return dst;
 }
 
@@ -293,23 +303,9 @@ int main()
    double mutual_inf = mutual_information(image, fin);
    std::cout << exp(-mutual_inf) << "*** \n";
 
-   Mat color(fin.cols, fin.rows, CV_8UC3);
-   cv::cvtColor(fin, color, cv::COLOR_GRAY2BGR);
-   Mat channel[3];
-   split(color, channel);
-   channel[1] = Mat::zeros(fin.rows, fin.cols, CV_8UC1);
-   merge(channel, 3, color);
-
-   Mat color_untransformed(fin.cols, fin.rows, CV_8UC3);
-   cv::cvtColor(pet, color_untransformed, cv::COLOR_GRAY2BGR);
-   split(color_untransformed, channel);
-   channel[1] = Mat::zeros(pet.rows, pet.cols, CV_8UC1);
-   merge(channel, 3, color_untransformed);
-
-   cv::cvtColor(image, image, cv::COLOR_GRAY2BGR);
-   cv::cvtColor(pet, pet, cv::COLOR_GRAY2BGR);
-   Mat fused = fusion_alphablend(image, color, 0.5);
-   Mat fused_unregistered = fusion_alphablend(image, color_untransformed, 0.5);
+   // now do the fusion
+   Mat fused = fusion_alphablend(image, fin, 0.5);
+   Mat fused_unregistered = fusion_alphablend(image, pet, 0.5);
 
    imshow("floating image", pet);
    imshow("original image", image);
