@@ -144,6 +144,41 @@ double cost_function(Mat ref, Mat flt, double tx, double ty, double a11, double 
    return exp(-mutual_information(ref, transform(flt, tx, ty, a11, a12, a21, a22)));
 }
 
+
+void estimate_initial(Mat ref, Mat flt, double& tx, double& ty, double& a11, double& a12, double& a21, double& a22)
+{
+   Moments im_mom = moments(ref);
+   Moments pt_mom = moments(flt);
+
+   /*
+   double pt_avg_10 = pt_mom.m10/pt_mom.m00;
+   double pt_avg_01 = pt_mom.m01/pt_mom.m00;
+   double pt_mu_20 = (pt_mom.m20/pt_mom.m00*1.0)-(pt_avg_10*pt_avg_10);
+   double pt_mu_02 = (pt_mom.m02/pt_mom.m00*1.0)-(pt_avg_01*pt_avg_01);
+   double pt_mu_11 = (pt_mom.m11/pt_mom.m00*1.0)-(pt_avg_01*pt_avg_10);
+
+   double im_avg_10 = im_mom.m10/im_mom.m00;
+   double im_avg_01 = im_mom.m01/im_mom.m00;
+   double im_mu_20 = (im_mom.m20/im_mom.m00*1.0)-(im_avg_10*im_avg_10);
+   double im_mu_02 = (im_mom.m02/im_mom.m00*1.0)-(im_avg_01*im_avg_01);
+   double im_mu_11 = (im_mom.m11/im_mom.m00*1.0)-(im_avg_01*im_avg_10);
+*/
+   tx = im_mom.m10/im_mom.m00 - pt_mom.m10/pt_mom.m00;
+   ty = im_mom.m01/im_mom.m00 - pt_mom.m01/pt_mom.m00;
+   std::cout << "???" << tx << " " << ty << "???\n";
+/*
+   double rho = 0.5f * atan((2.0*pt_mu_11)/(pt_mu_20 - pt_mu_02));
+   double rho_im = 0.5f * atan((2.0*im_mu_11)/(im_mu_20 - im_mu_02));*/
+
+   //   std::cout << "~~~~" << rho << "~~~~~~" << rho_im << "~~~~~~~~~";
+   //   const double rho_diff = rho - rho_im;
+   a11 = 1.0;
+   a12 = 0.0;
+   a21 = 0.0;
+   a22 = 1.0;
+}
+
+
 Mat fusion_alphablend(Mat ref, Mat flt, double alpha)
 {
    assert(abs(alpha) < 1.0);
@@ -186,32 +221,8 @@ int main()
    Size max_size = image.size();
    resize(pet, pet, max_size);
 
-
-   Moments im_mom = moments(image);
-   Moments pt_mom = moments(pet);
-
-   std::cout << im_mom.m10/im_mom.m00 << " " << im_mom.m01/im_mom.m00 << " \n\n";
-   std::cout << pt_mom.m10/pt_mom.m00 << " " << pt_mom.m01/pt_mom.m00 << " \n\n";
-
-   /*
-   double pt_avg_10 = pt_mom.m10/pt_mom.m00;
-   double pt_avg_01 = pt_mom.m01/pt_mom.m00;
-   double pt_mu_20 = (pt_mom.m20/pt_mom.m00*1.0)-(pt_avg_10*pt_avg_10);
-   double pt_mu_02 = (pt_mom.m02/pt_mom.m00*1.0)-(pt_avg_01*pt_avg_01);
-   double pt_mu_11 = (pt_mom.m11/pt_mom.m00*1.0)-(pt_avg_01*pt_avg_10);
-
-   double im_avg_10 = im_mom.m10/im_mom.m00;
-   double im_avg_01 = im_mom.m01/im_mom.m00;
-   double im_mu_20 = (im_mom.m20/im_mom.m00*1.0)-(im_avg_10*im_avg_10);
-   double im_mu_02 = (im_mom.m02/im_mom.m00*1.0)-(im_avg_01*im_avg_01);
-   double im_mu_11 = (im_mom.m11/im_mom.m00*1.0)-(im_avg_01*im_avg_10);
-*/
-   double tx = im_mom.m10/im_mom.m00 - pt_mom.m10/pt_mom.m00;
-   double ty = im_mom.m01/im_mom.m00 - pt_mom.m01/pt_mom.m00;
-   std::cout << "???" << tx << " " << ty << "???\n";
-/*
-   double rho = 0.5f * atan((2.0*pt_mu_11)/(pt_mu_20 - pt_mu_02));
-   double rho_im = 0.5f * atan((2.0*im_mu_11)/(im_mu_20 - im_mu_02));*/
+   double tx, ty, a11, a12, a21, a22;
+   estimate_initial(image, pet, tx, ty, a11, a12, a21, a22);
 
    bool converged = false;
 
@@ -223,13 +234,6 @@ int main()
    double a12_opt;
    double a21_opt;
    double a22_opt;
-
-//   std::cout << "~~~~" << rho << "~~~~~~" << rho_im << "~~~~~~~~~";
-//   const double rho_diff = rho - rho_im;
-   double a11 = 1.0;
-   double a12 = 0.0;
-   double a21 = 0.0;
-   double a22 = 1.0;
 
    //ty /= 2;
    while (!converged) {
