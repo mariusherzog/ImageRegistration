@@ -150,7 +150,14 @@ void estimate_initial(Mat ref, Mat flt, double& tx, double& ty, double& a11, dou
    Moments im_mom = moments(ref);
    Moments pt_mom = moments(flt);
 
-   /*
+   Mat ref_bin = ref.clone();
+   Mat flt_bin = flt.clone();
+   threshold(ref, ref_bin, 40, 256, 0);
+   threshold(flt, flt_bin, 40, 256, 0);
+
+   Moments ref_mom_bin = moments(ref_bin);
+   Moments flt_mom_bin = moments(flt_bin);
+
    double pt_avg_10 = pt_mom.m10/pt_mom.m00;
    double pt_avg_01 = pt_mom.m01/pt_mom.m00;
    double pt_mu_20 = (pt_mom.m20/pt_mom.m00*1.0)-(pt_avg_10*pt_avg_10);
@@ -162,16 +169,21 @@ void estimate_initial(Mat ref, Mat flt, double& tx, double& ty, double& a11, dou
    double im_mu_20 = (im_mom.m20/im_mom.m00*1.0)-(im_avg_10*im_avg_10);
    double im_mu_02 = (im_mom.m02/im_mom.m00*1.0)-(im_avg_01*im_avg_01);
    double im_mu_11 = (im_mom.m11/im_mom.m00*1.0)-(im_avg_01*im_avg_10);
-*/
+
    tx = im_mom.m10/im_mom.m00 - pt_mom.m10/pt_mom.m00;
    ty = im_mom.m01/im_mom.m00 - pt_mom.m01/pt_mom.m00;
-   std::cout << "???" << tx << " " << ty << "???\n";
-/*
-   double rho = 0.5f * atan((2.0*pt_mu_11)/(pt_mu_20 - pt_mu_02));
-   double rho_im = 0.5f * atan((2.0*im_mu_11)/(im_mu_20 - im_mu_02));*/
 
-   //   std::cout << "~~~~" << rho << "~~~~~~" << rho_im << "~~~~~~~~~";
-   //   const double rho_diff = rho - rho_im;
+   double scale = ref_mom_bin.m00/flt_mom_bin.m00;
+
+   double rho = 0.5f * atan((2.0*pt_mu_11)/(pt_mu_20 - pt_mu_02));
+   double rho_im = 0.5f * atan((2.0*im_mu_11)/(im_mu_20 - im_mu_02));
+
+   std::cout << "~~~~" << rho << "~~~~~~" << rho_im << " " <<  "~~~~~~~~~";
+   const double rho_diff = rho_im - rho;
+//   a11 = scale*cos(rho_diff);
+//   a12 = -sin(rho_diff);
+//   a21 = sin(rho_diff);
+//   a22 = scale*cos(rho_diff);
    a11 = 1.0;
    a12 = 0.0;
    a21 = 0.0;
@@ -201,15 +213,15 @@ Mat fusion_alphablend(Mat ref, Mat flt, double alpha)
 
 int main()
 {
-   Mat image = imread("mrit1.jpg", CV_LOAD_IMAGE_GRAYSCALE);
-   Mat pet = imread("mrit2.jpg", CV_LOAD_IMAGE_GRAYSCALE);
+   Mat image = imread("brain2.png", CV_LOAD_IMAGE_GRAYSCALE);
+   Mat pet = imread("pet.jpg", CV_LOAD_IMAGE_GRAYSCALE);
 
-   //pet = transform(pet, 9, -13, 0.86, -0.05, 0.05, 1.06);
+   //pet = transform(pet, 9, -13, 0.9, -0.08, 0.08, 1.06);
    //pet = transform(pet, 0, 0, cos(M_PI/4), -sin(M_PI/4), sin(M_PI/4), cos(M_PI/4));
 
    Size origsize(512, 512);
    resize(image, image, origsize);
-   //bitwise_not(pet, pet);
+   //bitwise_not(image, image);
 
    //Mat trans_mat = (Mat_<double>(2,3) << 1.04*cos(-0.05), sin(-0.05), 5, -sin(-0.05), 1.01*cos(-0.05), 3);
    //warpAffine(pet,pet,trans_mat,pet.size());
