@@ -11,9 +11,8 @@ using namespace std;
 using namespace std::placeholders;
 
 
-double mutual_information(Mat ref, Mat flt)
+Mat joint_probability(Mat ref, Mat flt)
 {
-
    Mat joint_histogram(256, 256, CV_64FC1, Scalar(0));
 
    for (int i=0; i<ref.cols; ++i) {
@@ -21,11 +20,31 @@ double mutual_information(Mat ref, Mat flt)
          int ref_intensity = ref.at<uchar>(j,i);
          int flt_intensity = flt.at<uchar>(j,i);
          joint_histogram.at<double>(ref_intensity, flt_intensity) = joint_histogram.at<double>(ref_intensity, flt_intensity)+1;
-         double v = joint_histogram.at<double>(ref_intensity, flt_intensity);
       }
    }
 
+   return joint_histogram;
+}
 
+double mutual_information(Mat ref, Mat flt)
+{
+   std::vector<Mat> rois_ref;
+   std::vector<Mat> rois_flt;
+
+   for (int i=0; i<ref.rows; i+=256) {
+      for (int j=0; j<flt.cols; j += 256) {
+         Rect roi = Rect(i, j, 256, 256);
+         rois_ref.emplace_back(ref(roi));
+         rois_flt.emplace_back(flt(roi));
+      }
+   }
+
+   Mat init(256, 256, CV_64FC1, Scalar(0));
+   for (int i=0; i<rois_ref.size(); ++i) {
+      init += joint_probability(rois_ref[i], rois_flt[i]);
+   }
+
+   Mat joint_histogram = /*joint_probability(ref, flt)*/ init;
 
    for (int i=0; i<256; ++i) {
       for (int j=0; j<256; ++j) {
@@ -169,7 +188,7 @@ int main()
    Mat image = imread("mrit1.jpg", CV_LOAD_IMAGE_GRAYSCALE);
    Mat pet = imread("mrit2.jpg", CV_LOAD_IMAGE_GRAYSCALE);
 
-   //pet = transform(pet, 9, -13, 0.86, -0.05, 0.05, 1.06);
+   //pet = transform(pet, 9, -19, 0.96, -0.05, 0.05, 1.06);
    //pet = transform(pet, 0, 0, cos(M_PI/4), -sin(M_PI/4), sin(M_PI/4), cos(M_PI/4));
 
    Size origsize(512, 512);
@@ -231,6 +250,7 @@ int main()
    double a21 = 0.0;
    double a22 = 1.0;
 
+   int n=0;
    //ty /= 2;
    while (!converged) {
       converged  = true;
@@ -294,6 +314,8 @@ int main()
          last_mutualinf = curr_mutualinf;
          converged = false;
       }
+
+      imwrite("img" + std::to_string(n++) + ".jpg", transform(pet, tx, ty, a11, a12, a21, a22));
    }
 
 
