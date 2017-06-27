@@ -54,15 +54,10 @@ double mutual_information(Mat ref, Mat flt)
 
 
    std::vector<double> hist_ref(256, 0.0);
-   for (int i=0; i<ref.rows; ++i) {
-      for (int j=0; j<ref.cols; ++j) {
-         int intensity = ref.at<uchar>(j, i);
-         hist_ref[intensity] = hist_ref[intensity]+1;
+   for (int i=0; i<joint_histogram.rows; ++i) {
+      for (int j=0; j<joint_histogram.cols; ++j) {
+         hist_ref[i] += joint_histogram.at<double>(i, j);
       }
-   }
-
-   for (int i=0; i<256; ++i) {
-      hist_ref[i] = hist_ref[i]/(1.0*ref.rows*ref.cols);
    }
 
    cv::Size ksize2(5,0);
@@ -70,16 +65,10 @@ double mutual_information(Mat ref, Mat flt)
 
 
    std::vector<double> hist_flt(256, 0.0);
-   for (int i=0; i<flt.rows; ++i) {
-      for (int j=0; j<flt.cols; ++j) {
-         int intensity = flt.at<uchar>(j, i);
-         hist_flt[intensity] = hist_flt[intensity]+1;
+   for (int i=0; i<joint_histogram.cols; ++i) {
+      for (int j=0; j<joint_histogram.rows; ++j) {
+         hist_flt[i] += joint_histogram.at<double>(j, i);
       }
-   }
-
-
-   for (int i=0; i<256; ++i) {
-      hist_flt[i] = hist_flt[i]/(1.0*flt.rows*flt.cols);
    }
 
    //   cv::GaussianBlur(hist_flt, hist_flt, ksize2, 5);
