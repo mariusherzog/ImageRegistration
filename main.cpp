@@ -34,8 +34,8 @@ double mutual_information(Mat ref, Mat flt)
       }
    }
 
-   cv::Size ksize(5,5);
-   //    cv::GaussianBlur(joint_histogram, joint_histogram, ksize, 5, 5);
+//   cv::Size ksize(7,7);
+//   cv::GaussianBlur(joint_histogram, joint_histogram, ksize, 7, 7);
 
 
    double entropy = 0.0;
@@ -202,15 +202,15 @@ Mat fusion_alphablend(Mat ref, Mat flt, double alpha)
 
 int main()
 {
-   Mat image = imread("brain2.png", CV_LOAD_IMAGE_GRAYSCALE);
-   Mat pet = imread("pet.jpg", CV_LOAD_IMAGE_GRAYSCALE);
+   Mat image = imread("mrit1.jpg", CV_LOAD_IMAGE_GRAYSCALE);
+   Mat pet = imread("mrit2.jpg", CV_LOAD_IMAGE_GRAYSCALE);
 
    //pet = transform(pet, 9, -13, 0.9, -0.08, 0.08, 1.06);
    //pet = transform(pet, 0, 0, cos(M_PI/4), -sin(M_PI/4), sin(M_PI/4), cos(M_PI/4));
 
    Size origsize(512, 512);
    resize(image, image, origsize);
-   //bitwise_not(image, image);
+   //bitwise_not(pet, pet);
 
    //Mat trans_mat = (Mat_<double>(2,3) << 1.04*cos(-0.05), sin(-0.05), 5, -sin(-0.05), 1.01*cos(-0.05), 3);
    //warpAffine(pet,pet,trans_mat,pet.size());
