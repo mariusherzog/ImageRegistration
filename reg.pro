@@ -5,6 +5,6 @@ CONFIG -= qt
 
 QMAKE_CXXFLAGS += -std=c++11 -g -O3
 
-LIBS += -lopencv_core -lopencv_imgproc -lopencv_highgui
+LIBS += -lopencv_core -lopencv_imgproc -lopencv_highgui -ltbb
 
 SOURCES += main.cpp

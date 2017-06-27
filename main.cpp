@@ -2,16 +2,29 @@
 #include <opencv2/imgproc/imgproc.hpp>
 #include <opencv2/highgui/highgui.hpp>
 #include <opencv2/nonfree/features2d.hpp>
+#include "tbb/parallel_reduce.h"
+#include "tbb/blocked_range.h"
 #include <iostream>
 #include <algorithm>
 #include <functional>
+#include <memory>
 
 using namespace cv;
 using namespace std;
 using namespace std::placeholders;
 
+struct roi
+{
+      Mat ref;
+      Mat flt;
 
-Mat joint_probability(Mat ref, Mat flt)
+      Mat res;
+
+      roi(): ref {}, flt {}, res {} {}
+      roi(Mat ref, Mat flt): ref {ref}, flt {flt}, res {} {}
+};
+
+Mat joint_probability(const Mat ref, const Mat flt)
 {
    Mat joint_histogram(256, 256, CV_64FC1, Scalar(0));
 
@@ -30,21 +43,45 @@ double mutual_information(Mat ref, Mat flt)
 {
    std::vector<Mat> rois_ref;
    std::vector<Mat> rois_flt;
+   std::vector<roi> rois;
 
-   for (int i=0; i<ref.rows; i+=256) {
+   for (int i=0; i<ref.rows; i+= 256) {
       for (int j=0; j<flt.cols; j += 256) {
-         Rect roi = Rect(i, j, 256, 256);
-         rois_ref.emplace_back(ref(roi));
-         rois_flt.emplace_back(flt(roi));
+         Rect r = Rect(i, j, 256, 256);
+//         rois_ref.emplace_back(ref(roi));
+//         rois_flt.emplace_back(flt(roi));
+         rois.emplace_back(ref(r), flt(r));
       }
    }
 
    Mat init(256, 256, CV_64FC1, Scalar(0));
-   for (int i=0; i<rois_ref.size(); ++i) {
-      init += joint_probability(rois_ref[i], rois_flt[i]);
-   }
+//   for (int i=0; i<rois.size(); ++i) {
+//      init += joint_probability(rois[i].ref, rois[i].flt);
+//   }
 
-   Mat joint_histogram = /*joint_probability(ref, flt)*/ init;
+   roi init_roi;
+   init_roi.res = init;
+   auto res = tbb::parallel_reduce(
+            tbb::blocked_range<roi*>(rois.data(), rois.data()+rois.size()),
+            init_roi,
+            [](const tbb::blocked_range<roi*>& r, roi in) -> roi
+   {
+      auto init = in.res.clone();
+      for (roi* it = r.begin(); it != r.end(); ++it) {
+         init += joint_probability(it->ref, it->flt);
+      }
+      roi newroi;
+      newroi.res = init;
+      return newroi;
+   },
+            [](roi a, roi b) -> roi
+   {
+       (a.res) += (b.res);
+       return a;
+   }
+            );
+
+   Mat joint_histogram = /*joint_probability(ref, flt)*/ res.res;
 
    for (int i=0; i<256; ++i) {
       for (int j=0; j<256; ++j) {
