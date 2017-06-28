@@ -34,8 +34,8 @@ double mutual_information(Mat ref, Mat flt)
       }
    }
 
-//   cv::Size ksize(7,7);
-//   cv::GaussianBlur(joint_histogram, joint_histogram, ksize, 7, 7);
+   cv::Size ksize(7,7);
+   cv::GaussianBlur(joint_histogram, joint_histogram, ksize, 7, 7);
 
 
    double entropy = 0.0;
@@ -167,16 +167,20 @@ void estimate_initial(Mat ref, Mat flt, double& tx, double& ty, double& a11, dou
    double rho = 0.5f * atan((2.0*pt_mu_11)/(pt_mu_20 - pt_mu_02));
    double rho_im = 0.5f * atan((2.0*im_mu_11)/(im_mu_20 - im_mu_02));
 
-   std::cout << "~~~~" << rho << "~~~~~~" << rho_im << " " <<  "~~~~~~~~~";
    const double rho_diff = rho_im - rho;
-//   a11 = scale*cos(rho_diff);
-//   a12 = -sin(rho_diff);
-//   a21 = sin(rho_diff);
-//   a22 = scale*cos(rho_diff);
-   a11 = 1.0;
-   a12 = 0.0;
-   a21 = 0.0;
-   a22 = 1.0;
+
+   const double roundness = (pt_mom.m20/pt_mom.m00) / (pt_mom.m02/pt_mom.m00);
+   if (abs(roundness-1.0) >= 0.3) {
+      a11 = cos(rho_diff);
+      a12 = -sin(rho_diff);
+      a21 = sin(rho_diff);
+      a22 = cos(rho_diff);
+   } else {
+      a11 = 1.0;
+      a12 = 0.0;
+      a21 = 0.0;
+      a22 = 1.0;
+   }
 }
 
 
@@ -202,15 +206,15 @@ Mat fusion_alphablend(Mat ref, Mat flt, double alpha)
 
 int main()
 {
-   Mat image = imread("mrit1.jpg", CV_LOAD_IMAGE_GRAYSCALE);
-   Mat pet = imread("mrit2.jpg", CV_LOAD_IMAGE_GRAYSCALE);
+   Mat image = imread("ctchest.png", CV_LOAD_IMAGE_GRAYSCALE);
+   Mat pet = imread("petchest.jpg", CV_LOAD_IMAGE_GRAYSCALE);
 
    //pet = transform(pet, 9, -13, 0.9, -0.08, 0.08, 1.06);
    //pet = transform(pet, 0, 0, cos(M_PI/4), -sin(M_PI/4), sin(M_PI/4), cos(M_PI/4));
 
    Size origsize(512, 512);
    resize(image, image, origsize);
-   //bitwise_not(pet, pet);
+   bitwise_not(pet, pet);
 
    //Mat trans_mat = (Mat_<double>(2,3) << 1.04*cos(-0.05), sin(-0.05), 5, -sin(-0.05), 1.01*cos(-0.05), 3);
    //warpAffine(pet,pet,trans_mat,pet.size());
