@@ -34,7 +34,7 @@ double mutual_information(Mat ref, Mat flt)
       }
    }
 
-   cv::Size ksize(7,7);
+   cv::Size ksize(7, 7);
    cv::GaussianBlur(joint_histogram, joint_histogram, ksize, 7, 7);
 
 
@@ -203,18 +203,63 @@ Mat fusion_alphablend(Mat ref, Mat flt, double alpha)
    return dst;
 }
 
+bool is_inverted(Mat ref, Mat flt)
+{
+   std::vector<double> hist_ref(256, 0);
+   std::vector<double> hist_flt(256, 0);
+
+   for (int i=0; i<ref.rows; ++i) {
+      for (int j=0; j<ref.cols; ++j) {
+         int val = ref.at<uchar>(i, j);
+         hist_ref[val]++;
+      }
+   }
+
+   for (int i=0; i<flt.rows; ++i) {
+      for (int j=0; j<flt.cols; ++j) {
+         int val = flt.at<uchar>(i, j);
+         hist_flt[val]++;
+      }
+   }
+
+   std::transform(hist_ref.begin(), hist_ref.end(), hist_ref.begin(), [&ref](int val) { return 1.0*val / (1.0*ref.cols*ref.rows); });
+   std::transform(hist_flt.begin(), hist_flt.end(), hist_flt.begin(), [&flt](int val) { return 1.0*val / (1.0*flt.cols*flt.rows); });
+
+   std::vector<double> distances(256, 0);
+   std::transform(hist_ref.begin(), hist_ref.end(), hist_flt.begin(), distances.begin(),
+                  [](double ref_val, double flt_val) { return abs(ref_val - flt_val); });
+
+   double distance_flt = std::accumulate(distances.begin(), distances.end(), 0.0);
+
+   // invert
+   std::reverse(hist_flt.begin(), hist_flt.end());
+
+   std::transform(hist_ref.begin(), hist_ref.end(), hist_flt.begin(), distances.begin(),
+                  [](double ref_val, double inv_val) { return abs(ref_val - inv_val); });
+
+   double distance_inv = std::accumulate(distances.begin(), distances.end(), 0.0);
+
+   return distance_flt < distance_inv;
+}
 
 int main()
 {
-   Mat image = imread("ctchest.png", CV_LOAD_IMAGE_GRAYSCALE);
-   Mat pet = imread("petchest.jpg", CV_LOAD_IMAGE_GRAYSCALE);
+   Mat image = imread("brainct.jpg", CV_LOAD_IMAGE_GRAYSCALE);
+   Mat pet = imread("brainpet.jpg", CV_LOAD_IMAGE_GRAYSCALE);
 
    //pet = transform(pet, 9, -13, 0.9, -0.08, 0.08, 1.06);
    //pet = transform(pet, 0, 0, cos(M_PI/4), -sin(M_PI/4), sin(M_PI/4), cos(M_PI/4));
 
+
    Size origsize(512, 512);
    resize(image, image, origsize);
-   bitwise_not(pet, pet);
+
+   bool inverted = false;
+   if (is_inverted(image, pet)) {
+      bitwise_not(pet, pet);
+      inverted = true;
+   }
+
 
    //Mat trans_mat = (Mat_<double>(2,3) << 1.04*cos(-0.05), sin(-0.05), 5, -sin(-0.05), 1.01*cos(-0.05), 3);
    //warpAffine(pet,pet,trans_mat,pet.size());
@@ -311,6 +356,11 @@ int main()
 
    double mutual_inf = mutual_information(image, fin);
    std::cout << exp(-mutual_inf) << "*** \n";
+
+   if (inverted) {
+      bitwise_not(fin, fin);
+      bitwise_not(pet, pet);
+   }
 
    // now do the fusion
    Mat fused = fusion_alphablend(image, fin, 0.5);
