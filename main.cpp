@@ -110,8 +110,14 @@ Mat transform(Mat image, double tx, double ty, double a11, double a12, double a2
 
 
 
-double cost_function(Mat ref, Mat flt, double tx, double ty, double a11, double a12, double a21, double a22)
+double cost_function(Mat ref, Mat flt, std::vector<double> affine_params)
 {
+   const double tx = affine_params[0];
+   const double ty = affine_params[1];
+   const double a11 = affine_params[2];
+   const double a12 = affine_params[3];
+   const double a21 = affine_params[4];
+   const double a22 = affine_params[5];
    return exp(-mutual_information(ref, transform(flt, tx, ty, a11, a12, a21, a22)));
 }
 
@@ -224,12 +230,13 @@ bool is_inverted(Mat ref, Mat flt)
    return distance_flt < distance_inv;
 }
 
+
 int main()
 {
-   Mat image = imread("brainct.jpg", CV_LOAD_IMAGE_GRAYSCALE);
-   Mat pet = imread("brainpet.jpg", CV_LOAD_IMAGE_GRAYSCALE);
+   Mat image = imread("brain2.png", CV_LOAD_IMAGE_GRAYSCALE);
+   Mat pet = imread("brain2.png", CV_LOAD_IMAGE_GRAYSCALE);
 
-   //pet = transform(pet, 9, -13, 0.9, -0.08, 0.08, 1.06);
+   pet = transform(pet, 9, -13, 0.97, -0.08, 0.08, 1.06);
    //pet = transform(pet, 0, 0, cos(M_PI/4), -sin(M_PI/4), sin(M_PI/4), cos(M_PI/4));
 
 
@@ -258,82 +265,22 @@ int main()
 
    bool converged = false;
 
-   double last_mutualinf = 100.0;
-   double curr_mutualinf = 0.0;
-   double tx_opt;
-   double ty_opt;
-   double a11_opt;
-   double a12_opt;
-   double a21_opt;
-   double a22_opt;
+   std::vector<double> init {tx, ty, a11, a12, a21, a22};
+   std::vector<double> rng {80.0, 80.0, 1.0, 1.0, 1.0, 1.0};
 
-   //ty /= 2;
-   while (!converged) {
-      converged  = true;
-      auto optimize_tx = std::bind(cost_function, image, pet, _1, ty, a11, a12, a21, a22);
-      //tx_opt = optimize_tx(image, pet, tx, 80, ty, a11, a12, a21, a22);
-      tx_opt = optimize_goldensectionsearch(tx, 80.0, optimize_tx);
-      curr_mutualinf = exp(-mutual_information(image, transform(pet, tx_opt, ty, a11, a12, a21, a22)));
-      if (last_mutualinf - curr_mutualinf > 0.00005) {
-         tx = tx_opt;
-         last_mutualinf = curr_mutualinf;
-         converged = false;
-      }
-
-      std::cout << last_mutualinf - curr_mutualinf << "++\n";
-
-      auto optimize_ty = std::bind(cost_function, image, pet, tx, _1, a11, a12, a21, a22);
-      ty_opt = optimize_goldensectionsearch(ty, 80.0, optimize_ty);
-      curr_mutualinf = exp(-mutual_information(image, transform(pet, tx, ty_opt, a11, a12, a21, a22)));
-      if (last_mutualinf - curr_mutualinf > 0.00005) {
-         ty = ty_opt;
-         last_mutualinf = curr_mutualinf;
-         converged = false;
-      }
-
-
-      auto optimize_a11 = std::bind(cost_function, image, pet, tx, ty, _1, a12, a21, a22);
-      a11_opt = optimize_goldensectionsearch(a11, 1.0, optimize_a11);
-      curr_mutualinf = exp(-mutual_information(image, transform(pet, tx, ty, a11_opt, a12, a21, a22)));
-      if (last_mutualinf - curr_mutualinf > 0.00005) {
-         a11 = a11_opt;
-         last_mutualinf = curr_mutualinf;
-         converged = false;
-      }
-
-      auto optimize_a12 = std::bind(cost_function, image, pet, tx, ty, a11, _1, a21, a22);
-      a12_opt = optimize_goldensectionsearch(a12, 1.0, optimize_a12);
-      curr_mutualinf = exp(-mutual_information(image, transform(pet, tx, ty, a11, a12_opt, a21, a22)));
-      std::cout << last_mutualinf - curr_mutualinf << "##";
-      if (last_mutualinf - curr_mutualinf > 0.00005) {
-         a12 = a12_opt;
-         last_mutualinf = curr_mutualinf;
-         converged = false;
-      }
-
-      auto optimize_a21 = std::bind(cost_function, image, pet, tx, ty, a11, a12, _1, a22);
-      a21_opt = optimize_goldensectionsearch(a21, 1.0, optimize_a21);
-      curr_mutualinf = exp(-mutual_information(image, transform(pet, tx, ty, a11, a12, a21_opt, a22)));
-      std::cout << last_mutualinf - curr_mutualinf << "##";
-      if (last_mutualinf - curr_mutualinf > 0.00005) {
-         a21 = a21_opt;
-         last_mutualinf = curr_mutualinf;
-         converged = false;
-      }
-
-      auto optimize_a22 = std::bind(cost_function, image, pet, tx, ty, a11, a12, a21, _1);
-      a22_opt = optimize_goldensectionsearch(a22, 1.0, optimize_a22);
-      curr_mutualinf = exp(-mutual_information(image, transform(pet, tx, ty, a11, a12, a21, a22_opt)));
-      std::cout << last_mutualinf - curr_mutualinf << "##";
-      if (last_mutualinf - curr_mutualinf > 0.00005) {
-         a22 = a22_opt;
-         last_mutualinf = curr_mutualinf;
-         converged = false;
-      }
-   }
+   std::pair<std::vector<double>::iterator, std::vector<double>::iterator> o {init.begin(), init.end()};
+   optimize_powell(o, {rng.begin(), rng.end()}, std::bind(cost_function, image, pet, _1) );
 
 
    std::cout << "!" << tx << " " << ty << "#";
+
+   tx = init[0];
+   ty = init[1];
+   a11 = init[2];
+   a12 = init[3];
+   a21 = init[4];
+   a22 = init[5];
+
    Mat fin = transform(pet, tx, ty, a11, a12, a21, a22);
 
    double mutual_inf = mutual_information(image, fin);
