@@ -6,6 +6,8 @@
 #include <algorithm>
 #include <functional>
 
+#include "optimize.hpp"
+
 using namespace cv;
 using namespace std;
 using namespace std::placeholders;
@@ -106,27 +108,7 @@ Mat transform(Mat image, double tx, double ty, double a11, double a12, double a2
    return out;
 }
 
-template <typename F>
-double optimize_goldensectionsearch(double init, double rng, F function)
-{
-   double sta = init - 0.382*rng;
-   double end = init + 0.618*rng;
-   double c = (end - (end-sta)/1.618);
-   double d = (sta + (end-sta)/1.618);
 
-   while (abs(c-d) > 0.005) {
-      if (function(c) < function(d)) {
-         end = d;
-      } else {
-         sta = c;
-      }
-
-      c = (end - (end-sta)/1.618);
-      d = (sta + (end-sta)/1.618);
-   }
-
-   return (end+sta)/2;
-}
 
 double cost_function(Mat ref, Mat flt, double tx, double ty, double a11, double a12, double a21, double a22)
 {
@@ -290,7 +272,7 @@ int main()
       converged  = true;
       auto optimize_tx = std::bind(cost_function, image, pet, _1, ty, a11, a12, a21, a22);
       //tx_opt = optimize_tx(image, pet, tx, 80, ty, a11, a12, a21, a22);
-      tx_opt = optimize_goldensectionsearch(tx, 80, optimize_tx);
+      tx_opt = optimize_goldensectionsearch(tx, 80.0, optimize_tx);
       curr_mutualinf = exp(-mutual_information(image, transform(pet, tx_opt, ty, a11, a12, a21, a22)));
       if (last_mutualinf - curr_mutualinf > 0.00005) {
          tx = tx_opt;
@@ -301,7 +283,7 @@ int main()
       std::cout << last_mutualinf - curr_mutualinf << "++\n";
 
       auto optimize_ty = std::bind(cost_function, image, pet, tx, _1, a11, a12, a21, a22);
-      ty_opt = optimize_goldensectionsearch(ty, 80, optimize_ty);
+      ty_opt = optimize_goldensectionsearch(ty, 80.0, optimize_ty);
       curr_mutualinf = exp(-mutual_information(image, transform(pet, tx, ty_opt, a11, a12, a21, a22)));
       if (last_mutualinf - curr_mutualinf > 0.00005) {
          ty = ty_opt;
