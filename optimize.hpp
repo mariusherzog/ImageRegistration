@@ -45,6 +45,8 @@ void optimize_powell(std::pair<Iter, Iter> init,
                      std::pair<Iter, Iter> rng,
                      Cf cost_function)
 {
+   using TPS = typename std::remove_reference<decltype(*init.first)>::type;
+
    bool converged = false;
 
    const double eps = 0.00005;
@@ -58,15 +60,15 @@ void optimize_powell(std::pair<Iter, Iter> init,
          auto curr_param = init.first[pos];
          auto curr_rng = rng.first[pos];
 
-         auto fn = [pos, init, &cost_function](typename std::remove_reference<decltype(*init.first)>::type p)
+         auto fn = [pos, init, &cost_function](TPS p)
          {
             init.first[pos] = p;
-            return cost_function(std::vector<typename std::remove_reference<decltype(*init.first)>::type>(init.first, init.second));
+            return cost_function(init.first);
          };
 
          auto param_optimized = optimize_goldensectionsearch(curr_param, curr_rng, fn);
 
-         auto curr_mutualinf = cost_function(std::vector<typename std::remove_reference<decltype(*init.first)>::type>(init.first, init.second));
+         auto curr_mutualinf = cost_function(init.first);
          init.first[pos] = curr_param;
          if (last_mutualinf - curr_mutualinf > eps) {
             *it = param_optimized;

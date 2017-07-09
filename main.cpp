@@ -109,8 +109,7 @@ Mat transform(Mat image, double tx, double ty, double a11, double a12, double a2
 }
 
 
-
-double cost_function(Mat ref, Mat flt, std::vector<double> affine_params)
+double cost_function(Mat ref, Mat flt, std::vector<double>::iterator affine_params)
 {
    const double tx = affine_params[0];
    const double ty = affine_params[1];
@@ -233,10 +232,10 @@ bool is_inverted(Mat ref, Mat flt)
 
 int main()
 {
-   Mat image = imread("brain2.png", CV_LOAD_IMAGE_GRAYSCALE);
-   Mat pet = imread("brain2.png", CV_LOAD_IMAGE_GRAYSCALE);
+   Mat image = imread("mrit1.jpg", CV_LOAD_IMAGE_GRAYSCALE);
+   Mat pet = imread("mrit2.jpg", CV_LOAD_IMAGE_GRAYSCALE);
 
-   pet = transform(pet, 9, -13, 0.97, -0.08, 0.08, 1.06);
+   //pet = transform(pet, 9, -13, 0.97, -0.08, 0.08, 1.06);
    //pet = transform(pet, 0, 0, cos(M_PI/4), -sin(M_PI/4), sin(M_PI/4), cos(M_PI/4));
 
 
