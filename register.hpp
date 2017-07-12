@@ -226,6 +226,7 @@ cv::Mat register_images(cv::Mat ref, cv::Mat flt)
 
    cv::Size ksize(5,5);
    cv::GaussianBlur(ref, ref, ksize, 10, 10);
+   cv::GaussianBlur(flt, flt, ksize, 10, 10);
 
    auto max_size = ref.size();
    cv::resize(flt, flt, max_size);
@@ -250,8 +251,8 @@ cv::Mat register_images(cv::Mat ref, cv::Mat flt)
 
    cv::Mat fin = transform(flt, tx, ty, a11, a12, a21, a22);
 
-//   double mutual_inf = mutual_inforcv::Mation(image, fin);
-//   std::cout << exp(-mutual_inf) << "*** \n";
+   double mutual_inf = mutual_information(ref, fin);
+   std::cout << exp(-mutual_inf) << "*** \n";
 
    if (inverted) {
       cv::bitwise_not(fin, fin);
