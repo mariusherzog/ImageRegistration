@@ -191,7 +191,7 @@ static bool is_inverted(cv::Mat ref, cv::Mat flt)
 
    std::vector<double> distances(256, 0);
    std::transform(hist_ref.begin(), hist_ref.end(), hist_flt.begin(), distances.begin(),
-                  [](double ref_val, double flt_val) { return abs(ref_val - flt_val); });
+                  [](double ref_val, double flt_val) { return fabs(ref_val - flt_val); });
 
    double distance_flt = std::accumulate(distances.begin(), distances.end(), 0.0);
 
@@ -199,11 +199,11 @@ static bool is_inverted(cv::Mat ref, cv::Mat flt)
    std::reverse(hist_flt.begin(), hist_flt.end());
 
    std::transform(hist_ref.begin(), hist_ref.end(), hist_flt.begin(), distances.begin(),
-                  [](double ref_val, double inv_val) { return abs(ref_val - inv_val); });
+                  [](double ref_val, double inv_val) { return fabs(ref_val - inv_val); });
 
    double distance_inv = std::accumulate(distances.begin(), distances.end(), 0.0);
 
-   return distance_flt < distance_inv;
+   return distance_flt > distance_inv;
 }
 
 /**
@@ -218,10 +218,8 @@ cv::Mat register_images(cv::Mat ref, cv::Mat flt)
    cv::Size origsize(512, 512);
    cv::resize(ref, ref, origsize);
 
-   bool inverted = false;
    if (is_inverted(ref, flt)) {
       cv::bitwise_not(flt, flt);
-      inverted = true;
    }
 
    cv::Size ksize(5,5);
@@ -253,11 +251,6 @@ cv::Mat register_images(cv::Mat ref, cv::Mat flt)
 
    double mutual_inf = mutual_information(ref, fin);
    std::cout << exp(-mutual_inf) << "*** \n";
-
-   if (inverted) {
-      cv::bitwise_not(fin, fin);
-      cv::bitwise_not(flt, flt);
-   }
 
    return fin.clone();
 }
