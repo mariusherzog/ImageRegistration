@@ -7,30 +7,11 @@
 #include <functional>
 
 #include "register.hpp"
+#include "fusion.hpp"
 
 using namespace cv;
 using namespace std;
 using namespace std::placeholders;
-
-
-Mat fusion_alphablend(Mat ref, Mat flt, double alpha)
-{
-   assert(abs(alpha) < 1.0);
-
-   Mat color(flt.cols, flt.rows, CV_8UC3);
-   cv::cvtColor(flt, color, cv::COLOR_GRAY2BGR);
-   Mat channel[3];
-   split(color, channel);
-   channel[1] = Mat::zeros(flt.rows, flt.cols, CV_8UC1);
-   merge(channel, 3, color);
-
-   cv::cvtColor(ref, ref, cv::COLOR_GRAY2BGR);
-
-   double beta = 1-alpha;
-   Mat dst = ref.clone();
-   addWeighted(ref, alpha, color, beta, 0.0, dst);
-   return dst;
-}
 
 int main()
 {

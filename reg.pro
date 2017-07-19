@@ -11,4 +11,5 @@ SOURCES += main.cpp
 
 HEADERS += \
     optimize.hpp \
-    register.hpp
+    register.hpp \
+    fusion.hpp
