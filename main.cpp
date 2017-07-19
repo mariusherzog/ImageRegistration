@@ -5,6 +5,7 @@
 #include <iostream>
 #include <algorithm>
 #include <functional>
+#include <memory>
 
 #include "register.hpp"
 #include "fusion.hpp"
@@ -25,12 +26,16 @@ int main()
    //pet = transform(pet, 9, -13, 0.97, -0.08, 0.08, 1.06);
    //pet = transform(pet, 0, 0, cos(M_PI/4), -sin(M_PI/4), sin(M_PI/4), cos(M_PI/4));
 
-   Mat fin = register_images(image, pet);
+   std::unique_ptr<fusion> fusion_algorithm = std::make_unique<alphablend>(0.5);
+   std::unique_ptr<registration> registration_algorithm =
+         std::make_unique<mutualinformation>();
+
+   Mat fin = registration_algorithm->perform(image, pet);
 
 
    // now do the fusion
-   Mat fused = fusion_alphablend(image, fin, 0.5);
-   Mat fused_unregistered = fusion_alphablend(image, pet, 0.5);
+   Mat fused = fusion_algorithm->perform(image, fin);
+   Mat fused_unregistered = fusion_algorithm->perform(image, pet);
 
    imshow("floating image", pet);
    imshow("original image", image);

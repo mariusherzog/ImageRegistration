@@ -1,9 +1,9 @@
 TEMPLATE = app
-CONFIG += console c++11
+CONFIG += console c++14
 CONFIG -= app_bundle
 CONFIG -= qt
 
-QMAKE_CXXFLAGS += -std=c++11 -g -O3
+QMAKE_CXXFLAGS += -std=c++14 -g -O3
 
 LIBS += -lopencv_core -lopencv_imgproc -lopencv_highgui
 
