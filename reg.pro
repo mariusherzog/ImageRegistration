@@ -12,4 +12,5 @@ SOURCES += main.cpp
 HEADERS += \
     optimize.hpp \
     register.hpp \
-    fusion.hpp
+    fusion.hpp \
+    fusion_algorithms.hpp

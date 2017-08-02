@@ -6,9 +6,11 @@
 #include <algorithm>
 #include <functional>
 #include <memory>
+#include <iterator>
 
 #include "register.hpp"
 #include "fusion.hpp"
+#include "fusion_algorithms.hpp"
 
 using namespace cv;
 using namespace std;
@@ -26,6 +28,12 @@ int main()
    //pet = transform(pet, 9, -13, 0.97, -0.08, 0.08, 1.06);
    //pet = transform(pet, 0, 0, cos(M_PI/4), -sin(M_PI/4), sin(M_PI/4), cos(M_PI/4));
 
+   auto available_fusion_names = fusion_algorithms::available();
+   std::copy(available_fusion_names.begin(),
+             available_fusion_names.end(),
+             std::ostream_iterator<std::string>(std::cout, "\n"));
+
+   fusion& fus_alg = fusion_algorithms::pick("alphablend");
    std::unique_ptr<fusion> fusion_algorithm = std::make_unique<alphablend>(0.5);
    std::unique_ptr<registration> registration_algorithm =
          std::make_unique<mutualinformation>();
@@ -34,7 +42,8 @@ int main()
 
 
    // now do the fusion
-   Mat fused = fusion_algorithm->perform(image, fin);
+   //Mat fused = fusion_algorithm->perform(image, fin);
+   Mat fused = fus_alg.perform(image, fin);
    Mat fused_unregistered = fusion_algorithm->perform(image, pet);
 
    imshow("floating image", pet);
