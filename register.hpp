@@ -17,7 +17,7 @@
 class registration
 {
    public:
-      virtual cv::Mat perform(cv::Mat ref, cv::Mat flt) = 0;
+      virtual cv::Mat register_images(cv::Mat ref, cv::Mat flt) = 0;
       virtual ~registration() = 0;
 };
 
@@ -84,7 +84,7 @@ static bool is_inverted(cv::Mat ref, cv::Mat flt)
 class mutualinformation : public registration
 {
    public:
-      cv::Mat perform(cv::Mat ref, cv::Mat flt) override
+      cv::Mat register_images(cv::Mat ref, cv::Mat flt) override
       {
          cv::Size origsize(512, 512);
          cv::resize(ref, ref, origsize);

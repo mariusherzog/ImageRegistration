@@ -8,9 +8,8 @@
 #include <memory>
 #include <iterator>
 
-#include "register.hpp"
-#include "fusion.hpp"
 #include "fusion_algorithms.hpp"
+#include "register_algorithms.hpp"
 
 using namespace cv;
 using namespace std;
@@ -33,13 +32,18 @@ int main()
              available_fusion_names.end(),
              std::ostream_iterator<std::string>(std::cout, "\n"));
 
+   auto available_register_names = register_algorithms::available();
+   std::copy(available_register_names.begin(),
+             available_register_names.end(),
+             std::ostream_iterator<std::string>(std::cout, "\n"));
+
 
    std::unique_ptr<fusion> fusion_algorithm = fusion_algorithms::pick("alphablend");
    std::unique_ptr<registration> registration_algorithm =
-         std::make_unique<mutualinformation>();
+         register_algorithms::pick("mutualinformation");
 
-   Mat fin = registration_algorithm->perform(image, pet);
-
+   // register to align images
+   Mat fin = registration_algorithm->register_images(image, pet);
 
    // now do the fusion
    Mat fused = fusion_algorithm->fuse(image, fin);

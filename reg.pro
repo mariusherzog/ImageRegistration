@@ -13,4 +13,5 @@ HEADERS += \
     optimize.hpp \
     register.hpp \
     fusion.hpp \
-    fusion_algorithms.hpp
+    fusion_algorithms.hpp \
+    register_algorithms.hpp

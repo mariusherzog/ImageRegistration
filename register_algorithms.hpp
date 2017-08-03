@@ -1,19 +1,19 @@
-#ifndef FUSION_ALGORITHMS_HPP
-#define FUSION_ALGORITHMS_HPP
+#ifndef REGISTER_ALGORITHMS_HPP
+#define REGISTER_ALGORITHMS_HPP
 
 #include <string>
 #include <algorithm>
 #include <memory>
 #include <cassert>
 
-#include "fusion.hpp"
+#include "register.hpp"
 
 /**
  * @brief The fusion_algorithms class is a facade which facilitates easy access
  *        to all available fusion strategies. Each strategies is uniquely
  *        identified by its name and can be accessed with it.
  */
-class fusion_algorithms
+class register_algorithms
 {
    private:
       static const std::vector<std::string> algorithms;
@@ -24,24 +24,24 @@ class fusion_algorithms
        * @param name identifying name / key of the fusion strategy
        * @return instance of the fusion strategy
        */
-      static std::unique_ptr<fusion> pick(std::string name)
+      static std::unique_ptr<registration> pick(std::string name)
       {
          if (std::find(algorithms.begin(), algorithms.end(), name) == algorithms.end())
          {
-            name = "alphablend";
+            name = "mutualinformation";
          }
 
-         if (name == "alphablend")
+         if (name == "mutualinformation")
          {
-            return std::make_unique<alphablend>(0.5);
+            return std::make_unique<mutualinformation>();
          }
          return nullptr;
       }
 
       /**
-       * @brief available returns a list of the names of all available fusion
-       *        algorithms.
-       * @return list of names of fusion algorithms
+       * @brief available returns a list of the names of all available
+       *        registration algorithms.
+       * @return list of names of registration algorithms
        */
       static std::vector<std::string> available()
       {
@@ -52,9 +52,9 @@ class fusion_algorithms
 /**
  * @todo maybe replace by enum
  */
-const std::vector<std::string> fusion_algorithms::algorithms
+const std::vector<std::string> register_algorithms::algorithms
 {
-   "alphablend"
+   "mutualinformation"
 };
 
-#endif // FUSION_ALGORITHMS_HPP
+#endif // REGISTER_ALGORITHMS_HPP
