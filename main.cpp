@@ -33,8 +33,8 @@ int main()
              available_fusion_names.end(),
              std::ostream_iterator<std::string>(std::cout, "\n"));
 
-   fusion& fus_alg = fusion_algorithms::pick("alphablend");
-   std::unique_ptr<fusion> fusion_algorithm = std::make_unique<alphablend>(0.5);
+
+   std::unique_ptr<fusion> fusion_algorithm = fusion_algorithms::pick("alphablend");
    std::unique_ptr<registration> registration_algorithm =
          std::make_unique<mutualinformation>();
 
@@ -42,9 +42,8 @@ int main()
 
 
    // now do the fusion
-   //Mat fused = fusion_algorithm->perform(image, fin);
-   Mat fused = fus_alg.perform(image, fin);
-   Mat fused_unregistered = fusion_algorithm->perform(image, pet);
+   Mat fused = fusion_algorithm->fuse(image, fin);
+   Mat fused_unregistered = fusion_algorithm->fuse(image, pet);
 
    imshow("floating image", pet);
    imshow("original image", image);

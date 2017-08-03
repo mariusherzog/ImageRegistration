@@ -4,11 +4,10 @@
 #include <map>
 #include <string>
 #include <algorithm>
+#include <memory>
+#include <cassert>
 
 #include "fusion.hpp"
-
-
-static alphablend alpblnd {0.5};
 
 /**
  * @brief The fusion_algorithms class is a facade which facilitates easy access
@@ -18,7 +17,7 @@ static alphablend alpblnd {0.5};
 class fusion_algorithms
 {
    private:
-      static const std::map<std::string, fusion*> algorithms;
+      static const std::vector<std::string> algorithms;
 
    public:
       /**
@@ -26,13 +25,18 @@ class fusion_algorithms
        * @param name identifying name / key of the fusion strategy
        * @return instance of the fusion strategy
        */
-      static fusion& pick(std::string name)
+      static std::unique_ptr<fusion> pick(std::string name)
       {
-         if (algorithms.find(name) == algorithms.end())
+         if (std::find(algorithms.begin(), algorithms.end(), name) == algorithms.end())
          {
             name = "alphablend";
          }
-         return *algorithms.at(name);
+
+         if (name == "alphablend")
+         {
+            return std::make_unique<alphablend>(0.5);
+         }
+         return nullptr;
       }
 
       /**
@@ -42,17 +46,16 @@ class fusion_algorithms
        */
       static std::vector<std::string> available()
       {
-         std::vector<std::string> names;
-         std::transform(algorithms.begin(), algorithms.end(),
-                        std::back_inserter(names),
-                        [](std::pair<std::string, fusion*> pair) { return pair.first; });
-         return names;
+         return algorithms;
       }
 };
 
-const std::map<std::string, fusion*> fusion_algorithms::algorithms
+/**
+ * @todo maybe replace by enum
+ */
+const std::vector<std::string> fusion_algorithms::algorithms
 {
-   { "alphablend", &alpblnd }
+   "alphablend"
 };
 
 #endif // FUSION_ALGORITHMS_HPP

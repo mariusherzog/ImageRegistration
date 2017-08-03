@@ -14,7 +14,7 @@
 class fusion
 {
    public:
-      virtual cv::Mat perform(cv::Mat a, cv::Mat b) = 0;
+      virtual cv::Mat fuse(cv::Mat a, cv::Mat b) = 0;
       virtual ~fusion() = 0;
 };
 
@@ -34,7 +34,7 @@ class alphablend : public fusion
       {
       }
 
-      cv::Mat perform(cv::Mat ref, cv::Mat flt) override
+      cv::Mat fuse(cv::Mat ref, cv::Mat flt) override
       {
          assert(abs(alpha) < 1.0);
 
