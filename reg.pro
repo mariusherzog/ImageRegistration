@@ -14,4 +14,13 @@ HEADERS += \
     register.hpp \
     fusion.hpp \
     fusion_algorithms.hpp \
-    register_algorithms.hpp
+    register_algorithms.hpp \
+    core/fusion.hpp \
+    core/fusion_algorithms.hpp \
+    core/optimize.hpp \
+    core/register.hpp \
+    core/register_algorithms.hpp
+
+DISTFILES += \
+    LICENSE \
+    README.md
