@@ -19,7 +19,8 @@ HEADERS += \
     core/fusion_algorithms.hpp \
     core/optimize.hpp \
     core/register.hpp \
-    core/register_algorithms.hpp
+    core/register_algorithms.hpp \
+    domain/fusion.hpp
 
 DISTFILES += \
     LICENSE \

@@ -8,8 +8,9 @@
 #include <memory>
 #include <iterator>
 
-#include "fusion_algorithms.hpp"
-#include "register_algorithms.hpp"
+#include "core/fusion_algorithms.hpp"
+#include "core/register_algorithms.hpp"
+#include "domain/fusion.hpp"
 
 using namespace cv;
 using namespace std;
@@ -27,26 +28,23 @@ int main()
    //pet = transform(pet, 9, -13, 0.97, -0.08, 0.08, 1.06);
    //pet = transform(pet, 0, 0, cos(M_PI/4), -sin(M_PI/4), sin(M_PI/4), cos(M_PI/4));
 
-   auto available_fusion_names = fusion_algorithms::available();
+   auto available_fusion_names = available_fusion_algorithms();
    std::copy(available_fusion_names.begin(),
              available_fusion_names.end(),
              std::ostream_iterator<std::string>(std::cout, "\n"));
 
-   auto available_register_names = register_algorithms::available();
+   auto available_register_names = available_registration_algorithms();
    std::copy(available_register_names.begin(),
              available_register_names.end(),
              std::ostream_iterator<std::string>(std::cout, "\n"));
 
 
    std::unique_ptr<fusion> fusion_algorithm = fusion_algorithms::pick("alphablend");
-   std::unique_ptr<registration> registration_algorithm =
-         register_algorithms::pick("mutualinformation");
 
-   // register to align images
-   Mat fin = registration_algorithm->register_images(image, pet);
+   Mat fused = fuse_images(image, pet, "mutualinformation", "alphablend");
+
 
    // now do the fusion
-   Mat fused = fusion_algorithm->fuse(image, fin);
    Mat fused_unregistered = fusion_algorithm->fuse(image, pet);
 
    imshow("floating image", pet);
