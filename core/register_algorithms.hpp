@@ -35,6 +35,10 @@ class register_algorithms
          {
             return std::make_unique<mutualinformation>();
          }
+         if (name == "identity")
+         {
+            return std::make_unique<identity>();
+         }
          return nullptr;
       }
 
@@ -54,7 +58,8 @@ class register_algorithms
  */
 const std::vector<std::string> register_algorithms::algorithms
 {
-   "mutualinformation"
+   "mutualinformation",
+   "identity"
 };
 
 #endif // REGISTER_ALGORITHMS_HPP

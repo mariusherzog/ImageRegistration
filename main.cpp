@@ -21,10 +21,6 @@ int main()
    Mat image = imread("mrit1.jpg", CV_LOAD_IMAGE_GRAYSCALE);
    Mat pet = imread("mrit2.jpg", CV_LOAD_IMAGE_GRAYSCALE);
 
-//   cv::Size origsize(512, 512);
-//   cv::resize(image, image, origsize);
-//   cv::resize(pet, pet, origsize);
-
    //pet = transform(pet, 9, -13, 0.97, -0.08, 0.08, 1.06);
    //pet = transform(pet, 0, 0, cos(M_PI/4), -sin(M_PI/4), sin(M_PI/4), cos(M_PI/4));
 
@@ -44,14 +40,12 @@ int main()
 
    //Mat fused = fuse_images(image, pet, "mutualinformation", "alphablend");
 
-
-   // now do the fusion
-   //Mat fused_unregistered = fusion_algorithm->fuse(image, pet);
+   Mat fused_unregistered = imagefusion::perform_fusion("identity", "alphablend");
 
    imshow("floating image", pet);
    imshow("original image", image);
    imshow("fused transformed", fused);
-   //imshow("fused unregistered", fused_unregistered);
+   imshow("fused unregistered", fused_unregistered);
 
    waitKey(0);
 }

@@ -273,8 +273,18 @@ class mutualinformation : public registration
             a22 = 1.0;
          }
       }
+};
 
-
+/**
+ * @brief The identity class performs no registration at all and leaves
+ *        the floating image unmodified.
+ */
+class identity : public registration
+{
+      cv::Mat register_images(cv::Mat, cv::Mat flt) override
+      {
+         return flt.clone();
+      }
 };
 
 
