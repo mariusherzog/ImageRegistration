@@ -6,8 +6,8 @@
 #include <opencv2/highgui/highgui.hpp>
 #include <opencv2/nonfree/features2d.hpp>
 
-#include "../core/fusion_algorithms.hpp"
-#include "../core/register_algorithms.hpp"
+#include "../fusion_algorithms.hpp"
+#include "../register_algorithms.hpp"
 
 /**
  * @brief available_fusion_algorithms

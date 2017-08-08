@@ -20,7 +20,11 @@ HEADERS += \
     core/optimize.hpp \
     core/register.hpp \
     core/register_algorithms.hpp \
-    domain/fusion.hpp
+    domain/image_repository.hpp \
+    interfaces/image_repository.hpp \
+    infastructure/file_repository.hpp \
+    app/imagefusion.hpp \
+    core/domain/fusion_services.hpp
 
 DISTFILES += \
     LICENSE \
