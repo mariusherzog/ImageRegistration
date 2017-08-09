@@ -12,10 +12,23 @@
 class imagefusion
 {
    public:
-      static cv::Mat perform_fusion(std::string register_strategy,
-                                    std::string fusion_strategy)
+      /**
+       * @brief perform_fusion_from_files is an application service which
+       *        performs fusion of two images and the given register / fusion
+       *        algorithms
+       * @param path_reference_image path to the reference image
+       * @param path_floating_image path to the floating image
+       * @param register_strategy name of the register strategy
+       * @param fusion_strategy name of the fusion strategy
+       * @return fused image
+       */
+      static cv::Mat perform_fusion_from_files(
+            std::string path_reference_image,
+            std::string path_floating_image,
+            std::string register_strategy,
+            std::string fusion_strategy)
       {
-         file_repository files("mrit1.jpg", "mrit2.jpg");
+         file_repository files(path_reference_image, path_floating_image);
          cv::Mat reference_image = files.reference_image();
          cv::Mat floating_image = files.floating_image();
 
@@ -23,11 +36,19 @@ class imagefusion
                             register_strategy, fusion_strategy);
       }
 
+      /**
+       * @brief fusion_strategies queries availabe fusion strategies
+       * @return a list of availabe fusion strategies
+       */
       static std::vector<std::string> fusion_strategies()
       {
          return available_fusion_algorithms();
       }
 
+      /**
+       * @brief register_strategies queries availabe register strategies
+       * @return a list of availabe register strategies
+       */
       static std::vector<std::string> register_strategies()
       {
          return available_registration_algorithms();
